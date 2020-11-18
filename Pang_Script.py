@@ -37,30 +37,42 @@ clock = pygame.time.Clock()
 # 사용자 게임 초기화 (스프라이트, 좌표, 속도, 폰트 등)
 # ------------------------------------------------------------
 img_path = "C:\\Users\\gkstm\\Desktop\\Python\\pygame_basic\\images\\"
-player = pygame.image.load(img_path + "player.png")
-weapon = pygame.image.load(img_path + "weapon.png")
+
 bg = pygame.image.load(img_path + "background.png")
 land = pygame.image.load(img_path + "land.png")
-balloon = []
-for i in range(1,5):
-    balloon.append(pygame.image.load(img_path + f"balloon{i}.png"))
-
 bg_width, bg_height = bg.get_rect().size
 bg_pos = (0, 0)
 land_width, land_height = land.get_rect().size
 land_pos = (0, screen_height - land_height)
 
+player = pygame.image.load(img_path + "player.png")
 p_width, p_height = player.get_rect().size
 p_pos_x = (screen_width - p_width) / 2
 p_pos_y = screen_height - p_height - land_height
 p_trans_x = 0
-p_speed = 0.6
+p_speed = 0.4
 p_moving = []
 
+weapon = pygame.image.load(img_path + "weapon.png")
 w_width, w_height = weapon.get_rect().size
 w_pos_x = w_pos_y = 0
 w_speed = 0.5
 w_shooting = False
+
+ball_imgs = []
+for i in range(1,5):
+    ball_imgs.append(pygame.image.load(img_path + f"balloon{i}.png"))
+ball_speed_y = [ -.36, -.3, -.24, -.18 ] # 공 크기에 따른 최초 스피드
+ball_size = [img.get_rect().size for img in ball_imgs]
+ball_accel = 0.01 # 공 중력가속도
+balls = [{
+    "pos_x" : 50, 
+    "pos_y" : 50, 
+    "img_idx" : 0, 
+    "trans_x": .1, # x축 이동방향
+    "trans_y": -.1, # y축 이동방향
+    "init_spd_y": ball_speed_y[0] # 최초 속도
+}]
 # ============================================================
 
 # 이벤트 루프
@@ -82,7 +94,7 @@ while running: # Unity의 Update()와 같은 역할
                 p_moving.append(1)
             if event.key == pygame.K_SPACE and not w_shooting:
                 w_pos_x = p_pos_x + (p_width - w_width) / 2
-                w_pos_y = screen_height - land_height
+                w_pos_y = p_pos_y
                 w_shooting = True
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
@@ -109,6 +121,19 @@ while running: # Unity의 Update()와 같은 역할
         w_pos_y -= w_speed * dt
         if w_pos_y < 0:
             w_shooting = 0
+        
+    for i, v in enumerate(balls):
+        # x축 이동
+        if v["pos_x"] < 0 or v["pos_x"] > screen_width - ball_size[v["img_idx"]][0]:
+            v["trans_x"] *= -1
+        v["pos_x"] += v["trans_x"] * dt
+
+        # y축 이동
+        if v["pos_y"] >= screen_height - land_height - ball_size[v["img_idx"]][1]:
+            v["trans_y"] = v["init_spd_y"]
+        else:
+            v["trans_y"] += ball_accel
+        v["pos_y"] += v["trans_y"] * dt
     # ============================================================
     
 
@@ -127,6 +152,8 @@ while running: # Unity의 Update()와 같은 역할
         screen.blit(weapon, (w_pos_x, w_pos_y))
     screen.blit(land, land_pos)
     screen.blit(player, (p_pos_x, p_pos_y))
+    for i, v in enumerate(balls):
+        screen.blit(ball_imgs[v["img_idx"]], (v["pos_x"], v["pos_y"]))
     # ============================================================
 
     pygame.display.update() # 화면 그리기
