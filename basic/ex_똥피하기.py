@@ -33,7 +33,7 @@ clock = pygame.time.Clock()
 # ============================================================
 # 사용자 게임 초기화 (스프라이트, 좌표, 속도, 폰트 등)
 # ------------------------------------------------------------
-img_path = "C:\\Users\\gkstm\\Desktop\\Python\\pygame_basic\\images\\"
+img_path = "C:\\Users\\gkstm\\Desktop\\Python\\pygame_basic\\images\\basic\\"
 background = pygame.image.load(img_path + "background.png")
 character = pygame.image.load(img_path + "character.png")
 enemy = pygame.image.load(img_path + "enemy.png")
