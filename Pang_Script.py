@@ -76,8 +76,9 @@ balls = [{
 # ============================================================
 
 # 이벤트 루프
-running = True
-while running: # Unity의 Update()와 같은 역할
+is_is_running = True
+is_win = None
+while is_running: # Unity의 Update()와 같은 역할
     dt = clock.tick(30) # FPS를 설정 (델타타임)
 
     # ============================================================
@@ -85,7 +86,7 @@ while running: # Unity의 Update()와 같은 역할
     # ------------------------------------------------------------
     for event in pygame.event.get(): 
         if event.type == pygame.QUIT:
-            running = False 
+            is_running = False 
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -122,27 +123,54 @@ while running: # Unity의 Update()와 같은 역할
         if w_pos_y < 0:
             w_shooting = 0
         
-    for i, v in enumerate(balls):
+    for b in balls:
         # x축 이동
-        if v["pos_x"] < 0 or v["pos_x"] > screen_width - ball_size[v["img_idx"]][0]:
-            v["trans_x"] *= -1
-        v["pos_x"] += v["trans_x"] * dt
+        if b["pos_x"] < 0 or b["pos_x"] > screen_width - ball_size[b["img_idx"]][0]:
+            b["trans_x"] *= -1
+        b["pos_x"] += b["trans_x"] * dt
 
         # y축 이동
-        if v["pos_y"] >= screen_height - land_height - ball_size[v["img_idx"]][1]:
-            v["trans_y"] = v["init_spd_y"]
+        if b["pos_y"] >= screen_height - land_height - ball_size[b["img_idx"]][1]:
+            b["trans_y"] = b["init_spd_y"]
         else:
-            v["trans_y"] += ball_accel
-        v["pos_y"] += v["trans_y"] * dt
+            b["trans_y"] += ball_accel
+        b["pos_y"] += b["trans_y"] * dt
     # ============================================================
     
 
     # ============================================================
     # 충돌 처리
     # ------------------------------------------------------------
+    p_rect = player.get_rect()
+    p_rect.left, p_rect.top = p_pos_x, p_pos_y
 
+    w_rect = weapon.get_rect()
+    w_rect.left, w_rect.top = w_pos_x, w_pos_y 
+
+    for b in balls:
+        b_rect = ball_imgs[b["img_idx"]].get_rect()
+        b_rect.left, b_rect.top = b["pos_x"], b["pos_y"]
+
+        if b_rect.colliderect(w_rect) and w_shooting:
+            w_shooting = False
+            # 가장 작은 공은 소멸
+            if b["img_idx"] == len(ball_imgs) - 1:
+                balls.remove(b)
+            # 그렇지 않을 경우 작은 공으로 분열함
+            else:
+                b["img_idx"] += 1
+                b["trans_y"] = -.1
+                balls.append(b.copy())
+                b["trans_x"] *= -1
+
+        if b_rect.colliderect(p_rect):
+            is_running = False
+            is_win = False
     # ============================================================
 
+    if not balls:
+        is_running = False
+        is_win = True
 
     # ============================================================
     # 화면에 그리기
@@ -152,9 +180,10 @@ while running: # Unity의 Update()와 같은 역할
         screen.blit(weapon, (w_pos_x, w_pos_y))
     screen.blit(land, land_pos)
     screen.blit(player, (p_pos_x, p_pos_y))
-    for i, v in enumerate(balls):
-        screen.blit(ball_imgs[v["img_idx"]], (v["pos_x"], v["pos_y"]))
+    for b in balls:
+        screen.blit(ball_imgs[b["img_idx"]], (b["pos_x"], b["pos_y"]))
     # ============================================================
 
     pygame.display.update() # 화면 그리기
+
 pygame.quit()
