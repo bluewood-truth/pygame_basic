@@ -45,6 +45,7 @@ bg_pos = (0, 0)
 land_width, land_height = land.get_rect().size
 land_pos = (0, screen_height - land_height)
 
+
 player = pygame.image.load(img_path + "player.png")
 p_width, p_height = player.get_rect().size
 p_pos_x = (screen_width - p_width) / 2
@@ -53,11 +54,13 @@ p_trans_x = 0
 p_speed = 0.4
 p_moving = []
 
+
 weapon = pygame.image.load(img_path + "weapon.png")
 w_width, w_height = weapon.get_rect().size
 w_pos_x = w_pos_y = 0
 w_speed = 0.5
 w_shooting = False
+
 
 ball_imgs = []
 for i in range(1,5):
@@ -73,10 +76,17 @@ balls = [{
     "trans_y": -.1, # y축 이동방향
     "init_spd_y": ball_speed_y[0] # 최초 속도
 }]
+
+
+timer_font = pygame.font.Font(None, 72)
+result_font = pygame.font.Font(None, 144)
+message_font = pygame.font.Font(None, 36)
+total_time = 99
+start_ticks = pygame.time.get_ticks()
 # ============================================================
 
 # 이벤트 루프
-is_is_running = True
+is_running = True
 is_win = None
 while is_running: # Unity의 Update()와 같은 역할
     dt = clock.tick(30) # FPS를 설정 (델타타임)
@@ -166,11 +176,25 @@ while is_running: # Unity의 Update()와 같은 역할
         if b_rect.colliderect(p_rect):
             is_running = False
             is_win = False
-    # ============================================================
-
+            
+    # 공이 하나도 없으면 승리
     if not balls:
         is_running = False
         is_win = True
+    # ============================================================
+
+
+    # ============================================================
+    # 타이머
+    # ------------------------------------------------------------
+    elapsed_time = (pygame.time.get_ticks() - start_ticks) / 1000
+    rest_time = total_time - elapsed_time
+    timer = timer_font.render(str(int(rest_time)), True, (255,255,255))
+    if rest_time <= 0:
+        is_running = False
+        is_win = False
+    # ============================================================
+
 
     # ============================================================
     # 화면에 그리기
@@ -182,8 +206,18 @@ while is_running: # Unity의 Update()와 같은 역할
     screen.blit(player, (p_pos_x, p_pos_y))
     for b in balls:
         screen.blit(ball_imgs[b["img_idx"]], (b["pos_x"], b["pos_y"]))
+    screen.blit(timer, (10, 10))
     # ============================================================
 
+    # 승패 메세지 표시
+    if is_win != None:
+        msg = "YOU WIN!" if is_win else "YOU LOSE..."
+        result_text = result_font.render(msg, True, (255,255,255))
+        result_text_pos_x, result_text_pos_y = result_text.get_rect().size
+        screen.blit(result_text, ((screen_width - result_text_pos_x)/2, (screen_height - result_text_pos_y)/2))
+    
     pygame.display.update() # 화면 그리기
 
+if is_win != None:
+    pygame.time.delay(2000)
 pygame.quit()
